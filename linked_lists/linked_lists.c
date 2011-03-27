@@ -12,6 +12,7 @@ typedef struct _sll_node_s
 static char	*f_data_filename 	= NULL ;
 static int	f_insert_value		= -1 ;
 static int	f_delete_value		= -1 ;
+static int	f_split_value		= -1 ;
 static int	f_opt_fail		= 0 ;
 static int	f_verbose		= 0 ;
 
@@ -19,7 +20,7 @@ static int parse_options ( int argc, char *argv[] )
 {
     int c = 0 ;
 
-    while ( ( c = getopt( argc, argv, "vd:f:i:" ) ) != -1 )
+    while ( ( c = getopt( argc, argv, "vd:f:i:s:" ) ) != -1 )
     {
 	switch ( c )
 	{
@@ -31,6 +32,9 @@ static int parse_options ( int argc, char *argv[] )
 		break ;
 	    case 'i':
 		f_insert_value = atoi(optarg) ;
+		break ;
+	    case 's':
+		f_split_value = atoi(optarg) ;
 		break ;
 	    case 'v':
 		f_verbose = 1 ;
@@ -99,6 +103,39 @@ void delete ( node **head, int val )
     }
 }
 
+void split ( node *head, int val, node **lt, node **gt )
+{
+    node *curr = head ;
+    node *prev = NULL ;
+
+    if ( head->val >= val )
+    {
+	*lt = NULL ;
+	*gt = curr ;
+	return ;
+    }
+
+    while ( curr != NULL && curr->val < val )
+    {
+	prev = curr ;
+	curr = curr->next ;
+    }
+
+    prev->next = NULL ;
+    *lt = head ;
+    *gt = curr ;
+}
+
+void printll ( node *curr )
+{
+    while ( curr != NULL )
+    {
+	printf ( "%d ", curr->val ) ;
+	curr = curr->next ;
+    }
+    printf ( "\n" ) ;
+}
+
 int main ( int argc, char *argv[] )
 {
     node 	*head 		= NULL ;
@@ -140,12 +177,7 @@ int main ( int argc, char *argv[] )
 
     if ( f_verbose )
     {
-	curr = head ;
-	while ( curr  != NULL )
-	{
-	    printf ( "%d\n", curr->val ) ;
-	    curr = curr->next ;
-	}
+	printll ( head ) ;
     }
 
     if ( f_insert_value >= 0 )
@@ -154,17 +186,30 @@ int main ( int argc, char *argv[] )
     if ( f_delete_value >= 0 )
 	delete ( &head, f_delete_value ) ;
 
-    if ( f_verbose )
+    if ( f_split_value >= 0 )
     {
-	curr = head ;
-	while ( curr  != NULL )
+	node *lt = NULL ;
+	node *gt = NULL ;
+	split ( head, f_split_value, &lt, &gt ) ;
+	if ( f_verbose )
 	{
-	    printf ( "%d\n", curr->val ) ;
-	    curr = curr->next ;
+	    printf ( "lt: " ) ; printll ( lt ) ;
+	    printf ( "gt: " ) ; printll ( gt ) ;
+	}
+
+	if ( lt != NULL )
+	{
+	    curr = lt ;
+	    while ( curr->next != NULL )
+		curr = curr->next ;
+	    curr->next = gt ;
 	}
     }
 
-end:
+    if ( f_verbose )
+	printll ( head ) ;
+
+//end:
     /* free the list */
     curr = head ;
     while ( curr != NULL )
