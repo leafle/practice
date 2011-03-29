@@ -15,15 +15,20 @@ static int	f_delete_value		= -1 ;
 static int	f_split_value		= -1 ;
 static int	f_opt_fail		= 0 ;
 static int	f_verbose		= 0 ;
+static int	f_find_middle		= 0 ;
+static int	f_check_for_cycle	= 0 ;
 
 static int parse_options ( int argc, char *argv[] )
 {
     int c = 0 ;
 
-    while ( ( c = getopt( argc, argv, "vd:f:i:s:" ) ) != -1 )
+    while ( ( c = getopt( argc, argv, "cmvd:f:i:s:" ) ) != -1 )
     {
 	switch ( c )
 	{
+	    case 'c':
+		f_check_for_cycle = 1 ;
+		break ;
 	    case 'd':
 		f_delete_value = atoi(optarg) ;
 		break ;
@@ -32,6 +37,9 @@ static int parse_options ( int argc, char *argv[] )
 		break ;
 	    case 'i':
 		f_insert_value = atoi(optarg) ;
+		break ;
+	    case 'm':
+		f_find_middle = 1 ;
 		break ;
 	    case 's':
 		f_split_value = atoi(optarg) ;
@@ -126,6 +134,40 @@ void split ( node *head, int val, node **lt, node **gt )
     *gt = curr ;
 }
 
+node *find_middle ( node *head )
+{
+    node *slowNode = head ;
+    node *fastNode = head ;
+
+    while ( fastNode != NULL )
+    {
+	fastNode = fastNode->next ;
+	if ( fastNode == NULL )
+	    break ;
+	slowNode = slowNode->next ;
+	fastNode = fastNode->next ;
+    }
+
+    return slowNode ;
+}
+
+int has_cycle ( node *head )
+{
+    node	*slowNode	= head ;
+    node	*fastNode	= head ;
+    node	*fasterNode	= head ;
+
+    while ( fasterNode != NULL && (fastNode = fasterNode->next) != NULL
+	    && (fasterNode = fastNode->next) != NULL )
+    {
+	if ( slowNode == fasterNode || slowNode == fastNode )
+	    return 1 ;
+	slowNode = slowNode->next ;
+    }
+
+    return 0 ;
+}
+
 void printll ( node *curr )
 {
     while ( curr != NULL )
@@ -175,6 +217,15 @@ int main ( int argc, char *argv[] )
 	prev = curr ;
     }
 
+    //curr->next = head ; /* test has_cycle */
+
+    if ( f_check_for_cycle )
+    {
+	int hasCycle = has_cycle ( head ) ;
+	printf ( "has_cycle=%d\n", hasCycle ) ;
+	if ( hasCycle ) return 0 ;
+    }
+
     if ( f_verbose )
     {
 	printll ( head ) ;
@@ -204,6 +255,15 @@ int main ( int argc, char *argv[] )
 		curr = curr->next ;
 	    curr->next = gt ;
 	}
+    }
+
+    if ( f_find_middle )
+    {
+	node *middle = find_middle ( head ) ;
+	printf ( "m=" ) ;
+	if ( middle )
+	    printf ( "%d", middle->val ) ;
+	printf ( "\n" ) ;
     }
 
     if ( f_verbose )
